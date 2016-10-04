@@ -1,0 +1,20 @@
+{
+	"compilerOptions": {
+		"declaration": true,
+		"module": "commonjs",
+		"moduleResolution": "node",
+		"noImplicitAny": true,
+		"noImplicitThis": true,
+		"outDir": "../dist",
+		"removeComments": false,
+		"strictNullChecks": true,
+		"target": "es5"
+	},
+	"files": [
+		"systemjs.d.ts",
+		"glsl.d.ts",
+
+		"server.ts",
+		"demo.ts"
+	]
+}

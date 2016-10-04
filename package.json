@@ -1,0 +1,24 @@
+{
+  "name": "charto-3d",
+  "version": "0.0.1",
+  "description": "3D playground",
+  "main": "dist/demo.js",
+  "scripts": {
+    "tsc": "tsc",
+    "cbuild": "cbuild",
+    "bundle": "cbuild -d -v -m systemjs-hot-reloader -o dist/bundle.js -C config-npm.js",
+    "bundle-reloader": "cbuild -d -v -s node_modules/systemjs-hot-reloader/hot-reloader.js -o dist/reloader-bundle.js -C config-reloader.js",
+    "prepublish": "tsc -p src && npm run bundle",
+    "start": "node dist/server.js"
+  },
+  "author": "Juha Järvi",
+  "license": "MIT",
+  "devDependencies": {
+    "cbuild": "~0.1.1",
+    "chokidar-socket-emitter": "~0.5.4",
+    "http-server": "~0.9.0",
+    "systemjs-hot-reloader": "~0.6.0",
+    "systemjs-plugin-text": "github:systemjs/plugin-text#0.0.9",
+    "typescript": "^2.0.3"
+  }
+}
