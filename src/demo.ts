@@ -90,6 +90,37 @@ export function init() {
 		skyTriangle.update();
 	});
 
+	document.addEventListener('keydown', (event: KeyboardEvent) => {
+		const directionY = new Vector3(0, 1, 0);
+		let sin = Math.sin(Math.PI / 32);
+		const cos = Math.cos(Math.PI / 32);
+		let axis: Vector3 | undefined;
+
+		switch(event.keyCode) {
+			case 37: // Left
+				sin = -sin;
+			case 39: // Right
+				axis = directionY;
+				break;
+
+			case 38: // Up
+				sin = -sin;
+			case 40: // Down
+				if(camera.direction.y * sin > 0 || Math.abs(camera.direction.y) < 31/32) {
+					axis = directionY.cross(camera.direction).setNormalized();
+				}
+				break;
+		}
+
+		if(axis) {
+			camera.direction = (TransMatrix
+				.makeRotate(sin, cos, axis)
+				.transformVector(camera.direction)
+				.setNormalized()
+			);
+		}
+	});
+
 	canvas.addEventListener('click', (event: MouseEvent) => {
 		var bound = canvas.getBoundingClientRect();
 		var projectedX = event.clientX - bound.left;
