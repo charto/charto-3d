@@ -11,7 +11,7 @@ export interface SkyTriangleSpec extends ThingSpec {
 export class SkyTriangle extends Thing implements SkyTriangleSpec {
 	constructor(spec: SkyTriangleSpec) {
 		const z = spec.camera.far;
-		const y = z * spec.camera.fovScale;
+		const y = z * spec.camera.ySlope;
 		const x = y * spec.camera.aspect;
 
 		spec.mesh = new Mesh({

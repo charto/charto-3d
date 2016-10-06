@@ -238,7 +238,7 @@ export class TransMatrix {
 	static makePerspective(camera: Camera) {
 		const zmin = camera.near;
 		const zmax = camera.far;
-		const ymax = zmin * camera.fovScale;
+		const ymax = zmin * camera.ySlope;
 		const ymin = -ymax;
 		const xmin = ymin * camera.aspect;
 		const xmax = ymax * camera.aspect;

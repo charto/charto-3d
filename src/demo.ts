@@ -92,23 +92,39 @@ export function init() {
 
 	canvas.addEventListener('click', (event: MouseEvent) => {
 		var bound = canvas.getBoundingClientRect();
-		var x = event.clientX - bound.left;
-		var y = event.clientY - bound.top;
-		console.log('x: ' + x + ' y: ' + y);
+		var projectedX = event.clientX - bound.left;
+		var projectedY = event.clientY - bound.top;
+		var halfWidth = bound.width / 2;
+		var halfHeight = bound.height / 2;
 
 		const directionY = new Vector3(0, 1, 0);
 
 		const inverse = camera.getMatrix().getTranspose3();
-		const matrix = inverse.getTranslated(inverse.transformVector(new Vector3(0, 0, 20)).setAdd(camera.position));
 
-		const cube = new Cube({
+		const z = 1;
+		const pixelSize = z * camera.ySlope / halfHeight;
+
+		const x = (projectedX - halfWidth) * pixelSize;
+		const y = (halfHeight - projectedY) * pixelSize;
+
+		/** Marker position relative to camera pointing towards positive Z. */
+		const markerPosition = new Vector3(
+			(projectedX / halfWidth - 1) * z * camera.ySlope * camera.aspect,
+			(1 - projectedY / halfHeight) * z * camera.ySlope,
+			z
+		);
+		const matrix = inverse.getScaled(1/128).getTranslated(
+			inverse.transformVector(markerPosition).setAdd(camera.position)
+		);
+
+		const marker = new Cube({
 			matrix: matrix,
 			material: cubeMaterial
 		});
 
-		cube.init(gl);
+		marker.init(gl);
 
-		scene.addThing(cube);
+		scene.addThing(marker);
 	}, false);
 
 	const renderer = new Renderer(gl);

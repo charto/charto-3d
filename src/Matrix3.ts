@@ -19,6 +19,14 @@ export class Matrix3 {
 		return(TransMatrix.from3(this, vector));
 	}
 
+	getScaled(scale: number) {
+		const matrix = new Matrix3();
+
+		for(let i = 0; i < 9; ++i) matrix.data[i] = this.data[i] * scale;
+
+		return(matrix);
+	}
+
 	/** Internal storage format is directly compatible with OpenGL.  */
 	data = new Float32Array(9);
 }

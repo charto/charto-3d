@@ -19,7 +19,7 @@ export class Camera implements CameraSpec {
 		this.near = spec.near;
 		this.far = spec.far;
 
-		this.fovScale = Math.tan(this.yfov * Math.PI / 360);
+		this.ySlope = Math.tan(this.yfov * Math.PI / 360);
 		this.setAspect(spec.aspect);
 
 		this.position = spec.position || new Vector3(0, 0, 0);
@@ -28,7 +28,7 @@ export class Camera implements CameraSpec {
 
 	setAspect(aspect: number) {
 		this.aspect = aspect;
-		this.xfov = Math.atan(this.aspect * this.fovScale) * 360 / Math.PI;
+		this.xfov = Math.atan(this.aspect * this.ySlope) * 360 / Math.PI;
 
 		this.projection = TransMatrix.makePerspective(this);
 	}
@@ -50,7 +50,7 @@ export class Camera implements CameraSpec {
 	/** Drawing area aspect ratio. */
 	aspect: number;
 	/** Ratio between pixel size and z coordinate. */
-	fovScale: number;
+	ySlope: number;
 
 	/** Distance to near clipping plane where everything is projected. */
 	readonly near: number;

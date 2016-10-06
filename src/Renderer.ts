@@ -16,7 +16,8 @@ export class Renderer {
 
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-		const angle = (new Date().getTime() - this.startTime) * 10 / 1000 * Math.PI / 180;
+		// const angle = (new Date().getTime() - this.startTime) * 10 / 1000 * Math.PI / 180;
+		const angle = 0;
 
 		const directionY = new Vector3(0, 1, 0);
 
