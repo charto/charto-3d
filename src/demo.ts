@@ -9,6 +9,7 @@ import {Texture} from './Texture';
 import {TextureCube} from './TextureCube';
 import {Cube} from './Cube';
 import {Shader, Attribute} from './Shader';
+import {Drag} from './Drag';
 
 import * as skyVertex from 'glsl:sky.vert';
 import * as panoramaFragment from 'glsl:equirectangular.frag';
@@ -121,29 +122,10 @@ export function init() {
 		}
 	});
 
-	canvas.addEventListener('click', (event: MouseEvent) => {
-		var bound = canvas.getBoundingClientRect();
-		var projectedX = event.clientX - bound.left;
-		var projectedY = event.clientY - bound.top;
-		var halfWidth = bound.width / 2;
-		var halfHeight = bound.height / 2;
+	const drag = new Drag(canvas, camera);
 
-		const directionY = new Vector3(0, 1, 0);
-
+	drag.onClick = (markerPosition: Vector3) => {
 		const inverse = camera.getMatrix().getTranspose3();
-
-		const z = 1;
-		const pixelSize = z * camera.ySlope / halfHeight;
-
-		const x = (projectedX - halfWidth) * pixelSize;
-		const y = (halfHeight - projectedY) * pixelSize;
-
-		/** Marker position relative to camera pointing towards positive Z. */
-		const markerPosition = new Vector3(
-			(projectedX / halfWidth - 1) * z * camera.ySlope * camera.aspect,
-			(1 - projectedY / halfHeight) * z * camera.ySlope,
-			z
-		);
 		const matrix = inverse.getScaled(1/128).getTranslated(
 			inverse.transformVector(markerPosition).setAdd(camera.position)
 		);
@@ -156,7 +138,7 @@ export function init() {
 		marker.init(gl);
 
 		scene.addThing(marker);
-	}, false);
+	};
 
 	const renderer = new Renderer(gl);
 
