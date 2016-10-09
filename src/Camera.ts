@@ -9,6 +9,7 @@ export interface CameraSpec {
 
 	position?: Vector3;
 	direction?: Vector3;
+	up?: Vector3;
 }
 
 /** Camera and projection handling. */
@@ -24,6 +25,7 @@ export class Camera implements CameraSpec {
 
 		this.position = spec.position || new Vector3(0, 0, 0);
 		this.setDirection(spec.direction || new Vector3(0, 0, 1));
+		this.up = spec.up || new Vector3(0, 1, 0);
 	}
 
 	setAspect(aspect: number) {
@@ -37,10 +39,16 @@ export class Camera implements CameraSpec {
 		this.direction = direction.setNormalized();
 	}
 
-	getMatrix() {
-		const directionY = new Vector3(0, 1, 0);
+	rotateBy(sin: number, cos: number, axis: Vector3) {
+		this.direction = (TransMatrix
+			.makeRotate(sin, cos, axis)
+			.transformVector(this.direction)
+			.setNormalized()
+		);
+	}
 
-		return(TransMatrix.makeOrient(this.position, this.direction, directionY));
+	getMatrix() {
+		return(TransMatrix.makeOrient(this.position, this.direction, this.up));
 	}
 
 	/** Horizontal field of view. */
@@ -62,4 +70,5 @@ export class Camera implements CameraSpec {
 
 	position: Vector3;
 	direction: Vector3;
+	up: Vector3;
 }
