@@ -1,6 +1,41 @@
 import {Vector3} from './Vector3';
 import {TransMatrix} from './TransMatrix';
 
+export function stringify(data: Float32Array, size: number) {
+	const widths: number[] = [];
+	const output: string[] = [];
+	let item: string;
+	let width: number;
+	let p = 0;
+
+	for(let x = 0; x < size; ++x) widths[x] = 0;
+
+	for(let y = 0; y < size; ++y) {
+		for(let x = 0; x < size; ++x) {
+			item = (Math.round(data[p++] * 10000) / 10000).toString();
+			width = item.length;
+
+			if(width > widths[x]) widths[x] = width;
+		}
+	}
+
+	p = 0;
+
+	for(let y = 0; y < size; ++y) {
+		const row: string[] = [];
+		for(let x = 0; x < size; ++x) {
+			item = (Math.round(data[p++] * 10000) / 10000).toString();
+			width = item.length;
+
+			row.push(new Array(widths[x] - width + 1).join(' ') + item);
+		}
+
+		output.push(row.join('  '));
+	}
+
+	return(output.join('\n'));
+}
+
 /** 3x3 rotation and scaling matrix. */
 
 export class Matrix3 {
@@ -25,6 +60,12 @@ export class Matrix3 {
 		for(let i = 0; i < 9; ++i) matrix.data[i] = this.data[i] * scale;
 
 		return(matrix);
+	}
+
+	/** Format nicely for debugging. */
+
+	toString() {
+		return(stringify(this.data, 3));
 	}
 
 	/** Internal storage format is directly compatible with OpenGL.  */

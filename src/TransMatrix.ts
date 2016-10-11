@@ -1,5 +1,5 @@
 import {Vector3} from './Vector3';
-import {Matrix3} from './Matrix3';
+import {Matrix3, stringify} from './Matrix3';
 import {Camera} from './Camera';
 
 /** 4x4 transformation or projection matrix. */
@@ -180,36 +180,7 @@ export class TransMatrix {
 	/** Format nicely for debugging. */
 
 	toString() {
-		const widths = [0, 0, 0, 0];
-		const output: string[] = [];
-		let item: string;
-		let width: number;
-		let p = 0;
-
-		for(let y = 0; y < 4; ++y) {
-			for(let x = 0; x < 4; ++x) {
-				item = (Math.round(this.data[p++] * 10000) / 10000).toString();
-				width = item.length;
-
-				if(width > widths[x]) widths[x] = width;
-			}
-		}
-
-		p = 0;
-
-		for(let y = 0; y < 4; ++y) {
-			const row: string[] = [];
-			for(let x = 0; x < 4; ++x) {
-				item = (Math.round(this.data[p++] * 10000) / 10000).toString();
-				width = item.length;
-
-				row.push(new Array(widths[x] - width + 1).join(' ') + item);
-			}
-
-			output.push(row.join('  '));
-		}
-
-		return(output.join('\n'));
+		return(stringify(this.data, 4));
 	}
 
 	/** Create a new identity matrix. */
