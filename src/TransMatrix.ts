@@ -208,7 +208,7 @@ export class TransMatrix {
 		const m = matrix.data;
 
 		const axisX = up.cross(direction).setNormalized();
-		const axisY = direction.cross(axisX).setNormalized();
+		const axisY = direction.cross(axisX);
 
 		m[ 0] = axisX.x;
 		m[ 1] = axisY.x;
@@ -307,6 +307,96 @@ export class TransMatrix {
 		d[15] = 1;
 
 		return(matrix);
+	}
+
+	// Find camera direction closest to guess, so that the camera's rotation matrix
+	// rotates a given unit vector in world coordinates to match another given
+	// unit vector in the camera's coordinate space.
+
+	static solveDirection(original: Vector3, projected: Vector3, guess?: Vector3) {
+		const epsilon = 1/65536;
+
+		const x = original.x;
+		const y = original.y;
+		const z = original.z;
+
+		const lenSq = y*y + z*z;
+
+		const p2 = projected.x * projected.x;
+		const x2 = x*x;
+		const y2 = y*y;
+		const z2 = z*z;
+		const x4 = x2*x2;
+		const y4 = y2*y2;
+		const z4 = z2*z2;
+
+		const discriminant = Math.sqrt(y*y * (lenSq - projected.y * projected.y));
+
+		let resultList: { cos: number, vector: Vector3 }[] = [];
+
+		for(let i = 0; i < 4; ++i) {
+			const sign1 = ((i << 1) & 2) - 1;
+			const sign2 = (i & 2) - 1;
+
+			const v = sign2 * (z * projected.y + sign1 * discriminant) / lenSq;
+
+			if(isNaN(v)) continue;
+
+			const v2 = v*v;
+			const v4 = v2*v2;
+
+			let F = -x4 - x2*z2 + x4*v2 - x2*y2*v2 + 2*x2*z2*v2 + x2*y2*v4 - x2*z2*v4 + x2*p2 - x2*v2*p2;
+
+			let A = x2 + z2 - x2*v2 - y2*v2 - 2*z2*v2 + y2*v4 + z2*v4;
+			let B = x4 + 2*x2*z2 + 2*x2*y2*v2 - 2*x2*z2*v2 - 2*y2*z2*v2 - 2*z4*v2 + y4*v4 + 2*y2*z2*v4 + z4*v4 + z4;
+			let C = 2 * F + 2*z2*p2 + 2*y2*v2*p2 - 4*z2*v2*p2 - 2*y2*v4*p2 + 2*z2*v4*p2;
+			let D =     F + 3*z2*p2 -   y2*v2*p2 - 6*z2*v2*p2 +   y2*v4*p2 + 3*z2*v4*p2;
+			let E = x2 - 2*x2*v2 + x2*v4 - p2 + 2*v2*p2 - v4*p2;
+
+			A /= B;
+			C /= B;
+			D /= B;
+			E /= B;
+
+			A *= projected.x;
+			E *= projected.x;
+
+			for(let j = 0; j < 16; ++j) {
+				const sign3 = ((j << 1) & 2) - 1;
+				const sign4 = (j & 2) - 1;
+				const sign5 = ((j >> 1) & 2) - 1;
+				const sign6 = ((j >> 2) & 2) - 1;
+
+				let u = sign5 * (
+					z * A +
+					sign3 * Math.sqrt( (4 * z2 * A*A) + C - 2*D )/2 +
+					sign4 * Math.sqrt(
+						(8 * z2 * A*A) - C - 2*D + (
+							sign3 * ((64 * z*z2 * A*A*A) - (32 * z * E) - (32 * z * A * D)) /
+							(4 * Math.sqrt( (4 * z2 * A*A) + C - 2 * D ))
+						)
+					)/2
+				);
+
+				if(isNaN(u)) continue;
+
+				const d = new Vector3(u, v, sign6 * Math.sqrt(1 - u*u - v*v));
+
+				const p = TransMatrix.makeOrient(new Vector3(0, 0, 0), d, new Vector3(0, 1, 0)).transformVector(projected).setNormalized();
+				const cosAngle = (p.x * original.x + p.y * original.y + p.z * original.z);
+
+				if(cosAngle > 1 - epsilon) {
+					resultList.push({
+						cos: (p.x * original.x + p.y * original.y + p.z * original.z),
+						vector: d
+					});
+				}
+			}
+		}
+
+		resultList.sort((a, b) => b.cos - a.cos);
+
+		return(resultList.length ? resultList[0].vector : null);
 	}
 
 	/** Internal storage format is directly compatible with OpenGL.  */

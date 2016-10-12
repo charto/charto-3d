@@ -113,21 +113,16 @@ export function init() {
 				break;
 		}
 
-		if(axis) {
-			camera.direction = (TransMatrix
-				.makeRotate(sin, cos, axis)
-				.transformVector(camera.direction)
-				.setNormalized()
-			);
-		}
+		if(axis) camera.rotateBy(sin, cos, axis);
 	});
 
 	const drag = new Drag(canvas, camera);
 
-	drag.onClick = (markerPosition: Vector3) => {
+	drag.onClick = (position: Vector3) => {
 		const inverse = camera.getMatrix().getTranspose3();
+		// Scale marker and place it at position (which includes z displacement)
 		const matrix = inverse.getScaled(1/128).getTranslated(
-			inverse.transformVector(markerPosition).setAdd(camera.position)
+			inverse.transformVector(position).setAdd(camera.position)
 		);
 
 		const marker = new Cube({
@@ -139,6 +134,12 @@ export function init() {
 
 		scene.addThing(marker);
 	};
+
+	drag.onMove = (position: Vector3) => {
+		position.setNormalized();
+		const direction = TransMatrix.solveDirection(position, drag.dragPosition, camera.direction);
+		if(direction) camera.direction = direction;
+	}
 
 	const renderer = new Renderer(gl);
 

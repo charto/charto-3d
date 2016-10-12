@@ -1,4 +1,5 @@
 import {Vector3} from './Vector3';
+import {Matrix3} from './Matrix3';
 import {Camera} from './Camera';
 
 export class Drag {
@@ -11,6 +12,8 @@ export class Drag {
 
 		function handleMove(event: MouseEvent) {
 			const parsed = self.parseEvent(event);
+
+			if(self.onMove) self.onMove(parsed.position);
 		}
 
 		function handleUp(event: MouseEvent) {
@@ -18,7 +21,7 @@ export class Drag {
 			const dx = parsed.canvasX - self.dragX;
 			const dy = parsed.canvasY - self.dragY;
 
-			if(dx * dx + dy * dy < clickDistance * clickDistance) {
+			if(self.onClick && dx * dx + dy * dy < clickDistance * clickDistance) {
 				self.onClick(parsed.position);
 			}
 
@@ -31,6 +34,9 @@ export class Drag {
 
 			this.dragX = parsed.canvasX;
 			this.dragY = parsed.canvasY;
+			this.dragCameraDirection = this.camera.direction;
+			this.dragInverse = this.camera.getMatrix().getTranspose3();
+			this.dragPosition = this.dragInverse.transformVector(parsed.position).setNormalized();
 
 			canvas.addEventListener('mousemove', handleMove);
 			canvas.addEventListener('mouseup', handleUp);
@@ -59,9 +65,13 @@ export class Drag {
 	}
 
 	onClick: (position: Vector3) => void;
+	onMove: (position: Vector3) => void;
 
 	dragX: number;
 	dragY: number;
+	dragPosition: Vector3;
+	dragCameraDirection: Vector3;
+	dragInverse: Matrix3;
 
 	canvas: HTMLCanvasElement;
 	camera: Camera;

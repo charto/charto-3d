@@ -13,6 +13,18 @@ export class Vector3 {
 		return(this);
 	}
 
+	getSquaredLength() {
+		const x = this.x;
+		const y = this.y;
+		const z = this.z;
+
+		return(x * x + y * y + z * z);
+	}
+
+	getLength() {
+		return(Math.sqrt(this.getSquaredLength()));
+	}
+
 	setNormalized() {
 		const x = this.x;
 		const y = this.y;
@@ -49,6 +61,10 @@ export class Vector3 {
 
 	getInverse() {
 		return(new Vector3(-this.x, -this.y, -this.z));
+	}
+
+	toString() {
+		return([this.x, this.y, this.z].map((x) => (Math.round(x * 10000) / 10000).toString()).join('  '));
 	}
 
 	static fromArray(a: number[]) {
