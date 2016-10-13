@@ -137,7 +137,7 @@ export function init() {
 
 	drag.onMove = (position: Vector3) => {
 		position.setNormalized();
-		const direction = TransMatrix.solveDirection(position, drag.dragPosition, camera.direction);
+		const direction = TransMatrix.solveDirection(drag.dragPosition, position, camera.direction);
 		if(direction) camera.direction = direction;
 	}
 

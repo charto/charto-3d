@@ -309,57 +309,67 @@ export class TransMatrix {
 		return(matrix);
 	}
 
-	// Find camera direction closest to guess, so that the camera's rotation matrix
-	// rotates a given unit vector in world coordinates to match another given
-	// unit vector in the camera's coordinate space.
+	/** Find camera direction closest to guess, so that the camera matrix
+	 * rotates a given unit vector in world coordinates to match another given
+	 * unit vector in the camera's coordinate space.
+	 *
+	 * Note: zenith cannot be rotated below horizon or nadir above horizon. */
 
-	static solveDirection(original: Vector3, projected: Vector3, guess?: Vector3) {
+	static solveDirection(original: Vector3, rotated: Vector3, guess: Vector3) {
 		const epsilon = 1/65536;
 
-		const x = original.x;
-		const y = original.y;
-		const z = original.z;
+		const x = rotated.x;
+		const y = rotated.y;
+		const z = rotated.z;
 
 		const lenSq = y*y + z*z;
 
-		const p2 = projected.x * projected.x;
+		const p2 = original.x * original.x;
 		const x2 = x*x;
-		const y2 = y*y;
 		const z2 = z*z;
-		const x4 = x2*x2;
-		const y4 = y2*y2;
-		const z4 = z2*z2;
 
-		const discriminant = Math.sqrt(y*y * (lenSq - projected.y * projected.y));
+		let discriminantY = lenSq - original.y * original.y;
+		if(discriminantY < 0) {
+			// Trying to rotate zenith or nadir off the YZ plane.
+			console.log('Zenith or nadir off YZ!');
+			return(null);
+		}
+		discriminantY = y * Math.sqrt(discriminantY);
 
-		let resultList: { cos: number, vector: Vector3 }[] = [];
+		let resultList: { cosGuess: number, vector: Vector3 }[] = [];
 
 		for(let i = 0; i < 4; ++i) {
 			const sign1 = ((i << 1) & 2) - 1;
 			const sign2 = (i & 2) - 1;
 
-			const v = sign2 * (z * projected.y + sign1 * discriminant) / lenSq;
+			/** Output Y component */
+			const v = sign2 * (z * original.y + sign1 * discriminantY) / lenSq;
 
-			if(isNaN(v)) continue;
+			const w = 1 - v*v;
+			const y2v2 = y*y * v*v;
 
-			const v2 = v*v;
-			const v4 = v2*v2;
-
-			let F = -x4 - x2*z2 + x4*v2 - x2*y2*v2 + 2*x2*z2*v2 + x2*y2*v4 - x2*z2*v4 + x2*p2 - x2*v2*p2;
-
-			let A = x2 + z2 - x2*v2 - y2*v2 - 2*z2*v2 + y2*v4 + z2*v4;
-			let B = x4 + 2*x2*z2 + 2*x2*y2*v2 - 2*x2*z2*v2 - 2*y2*z2*v2 - 2*z4*v2 + y4*v4 + 2*y2*z2*v4 + z4*v4 + z4;
-			let C = 2 * F + 2*z2*p2 + 2*y2*v2*p2 - 4*z2*v2*p2 - 2*y2*v4*p2 + 2*z2*v4*p2;
-			let D =     F + 3*z2*p2 -   y2*v2*p2 - 6*z2*v2*p2 +   y2*v4*p2 + 3*z2*v4*p2;
-			let E = x2 - 2*x2*v2 + x2*v4 - p2 + 2*v2*p2 - v4*p2;
+			let F = x2*w *   (z2*w +   y2v2 +   x2 - p2);
+			let A =    w *   (z2*w -   y2v2 +   x2);
+			let B = z2*w *   (z2*w - 2*y2v2 + 2*x2) + (x2 + y2v2) * (x2 + y2v2);
+			let C = p2*w * (2*z2*w + 2*y2v2) - 2*F;
+			let D = p2*w * (3*z2*w -   y2v2) -   F;
+			let E = (x2 - p2) * w*w;
 
 			A /= B;
 			C /= B;
 			D /= B;
 			E /= B;
 
-			A *= projected.x;
-			E *= projected.x;
+			A *= original.x * z;
+			E *= original.x * z;
+
+			let discriminantX1 = 4 * A*A + C - 2*D;
+			if(discriminantX1 < 0) {
+				// Rare but possible, what does this mean?
+				console.log('Unknown error 1');
+				continue;
+			}
+			discriminantX1 = Math.sqrt(discriminantX1);
 
 			for(let j = 0; j < 16; ++j) {
 				const sign3 = ((j << 1) & 2) - 1;
@@ -367,34 +377,40 @@ export class TransMatrix {
 				const sign5 = ((j >> 1) & 2) - 1;
 				const sign6 = ((j >> 2) & 2) - 1;
 
-				let u = sign5 * (
-					z * A +
-					sign3 * Math.sqrt( (4 * z2 * A*A) + C - 2*D )/2 +
-					sign4 * Math.sqrt(
-						(8 * z2 * A*A) - C - 2*D + (
-							sign3 * ((64 * z*z2 * A*A*A) - (32 * z * E) - (32 * z * A * D)) /
-							(4 * Math.sqrt( (4 * z2 * A*A) + C - 2 * D ))
-						)
-					)/2
-				);
+				const discriminantX2 = (
+					(8*A*A) - C - 2*D +
+					32 * (A * (2*A*A - D) - E) / (4 * sign3 * discriminantX1)
+				)
 
-				if(isNaN(u)) continue;
+				if(discriminantX2 < 0) continue;
+
+				/** Output X component */
+				let u = sign5 * (
+					A +
+					sign3 * discriminantX1/2 +
+					sign4 * 1/2 * Math.sqrt(discriminantX2)
+				);
 
 				const d = new Vector3(u, v, sign6 * Math.sqrt(1 - u*u - v*v));
 
-				const p = TransMatrix.makeOrient(new Vector3(0, 0, 0), d, new Vector3(0, 1, 0)).transformVector(projected).setNormalized();
-				const cosAngle = (p.x * original.x + p.y * original.y + p.z * original.z);
+				/** Cosine of angle between given rotated vector, and
+				  * original vector rotated using solved lookat direction. */
+				const cosError = TransMatrix.makeOrient(
+					new Vector3(0, 0, 0),
+					d,
+					new Vector3(0, 1, 0)
+				).transformVector(original).dot(rotated);
 
-				if(cosAngle > 1 - epsilon) {
+				if(cosError > 1 - epsilon) {
 					resultList.push({
-						cos: (p.x * original.x + p.y * original.y + p.z * original.z),
+						cosGuess: d.dot(guess),
 						vector: d
 					});
 				}
 			}
 		}
 
-		resultList.sort((a, b) => b.cos - a.cos);
+		resultList.sort((a, b) => b.cosGuess - a.cosGuess);
 
 		return(resultList.length ? resultList[0].vector : null);
 	}
