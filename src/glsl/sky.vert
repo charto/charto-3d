@@ -1,3 +1,6 @@
+// This file is part of charto-3d, copyright (C) 2016 BusFaster Ltd.
+// Released under the MIT license, see LICENSE.
+
 // Vertex shader for the sky, just storing viewing direction into the normal.
 
 attribute vec3 aPosition;

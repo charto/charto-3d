@@ -1,3 +1,6 @@
+// This file is part of charto-3d, copyright (C) 2016 BusFaster Ltd.
+// Released under the MIT license, see LICENSE.
+
 import {TransMatrix} from './TransMatrix';
 import {Mesh} from './Mesh';
 import {Material} from './Material';

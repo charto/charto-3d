@@ -1,3 +1,6 @@
+// This file is part of charto-3d, copyright (C) 2016 BusFaster Ltd.
+// Released under the MIT license, see LICENSE.
+
 export class Vector3 {
 	constructor(x: number, y: number, z: number) {
 		this.x = x;

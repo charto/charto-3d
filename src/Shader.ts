@@ -1,3 +1,6 @@
+// This file is part of charto-3d, copyright (C) 2016 BusFaster Ltd.
+// Released under the MIT license, see LICENSE.
+
 export const enum Attribute {
 	position = 0,
 	uv = 1

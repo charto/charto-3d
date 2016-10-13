@@ -1,3 +1,6 @@
+// This file is part of charto-3d, copyright (C) 2016 BusFaster Ltd.
+// Released under the MIT license, see LICENSE.
+
 import {Vector3} from './Vector3';
 import {Matrix3, stringify} from './Matrix3';
 import {Camera} from './Camera';
