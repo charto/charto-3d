@@ -9,8 +9,16 @@ export class Renderer {
 	constructor(gl: WebGLRenderingContext) {
 		this.gl = gl;
 	}
-
 	render(camera: Camera, scene: Scene) {
+		if(!this.scheduled) {
+			this.scheduled = true;
+			window.requestAnimationFrame(() => this.refresh(camera, scene));
+		}
+	}
+
+	refresh(camera: Camera, scene: Scene) {
+		this.scheduled = false;
+
 		const gl = this.gl;
 
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -59,6 +67,8 @@ export class Renderer {
 			gl.drawElements(gl.TRIANGLES, mesh.face.length, gl.UNSIGNED_SHORT, 0);
 		}
 	}
+
+	scheduled = false;
 
 	attributeActiveList: boolean[] = [];
 

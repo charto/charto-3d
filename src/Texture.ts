@@ -7,7 +7,7 @@ export function isPow2(n: number) {
 }
 
 export class Texture implements TextureSpec {
-	constructor(gl: WebGLRenderingContext, spec: TextureSpec) {
+	constructor(gl: WebGLRenderingContext, spec: TextureSpec, onReady: () => void) {
 		this.url = spec.url;
 		this.buffer = gl.createTexture()!;
 
@@ -15,6 +15,10 @@ export class Texture implements TextureSpec {
 
 		image.onload = () => this.handleLoaded(gl, image);
 		image.src = this.url;
+
+		this.onReady = onReady;
+
+		++Texture.pending;
 	}
 
 	handleLoaded(gl: WebGLRenderingContext, image: HTMLImageElement) {
@@ -34,6 +38,9 @@ export class Texture implements TextureSpec {
 		}
 
 		gl.bindTexture(gl.TEXTURE_2D, null);
+
+		// TODO: implement a texture manager that fires this event instead.
+		if(--Texture.pending == 0) this.onReady();
 	}
 
 	activate(gl: WebGLRenderingContext) {
@@ -42,4 +49,8 @@ export class Texture implements TextureSpec {
 
 	url: string;
 	buffer: WebGLTexture;
+
+	onReady: () => void;
+
+	static pending = 0;
 }

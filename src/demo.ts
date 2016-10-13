@@ -44,7 +44,8 @@ export function init() {
 	gl.enable(gl.CULL_FACE);
 	gl.cullFace(gl.FRONT);
 
-	var scene = new Scene();
+	const scene = new Scene();
+	const renderer = new Renderer(gl);
 
 	const skyMaterial = new Material({
 		shader: new Shader(gl, {
@@ -57,7 +58,7 @@ export function init() {
 		textures: {
 			'uTexture': new Texture(gl, {
 				url: 'panorama.jpg'
-			})
+			}, () => renderer.render(camera, scene))
 		}
 	});
 
@@ -82,7 +83,7 @@ export function init() {
 		textures: {
 			'uTexture': new Texture(gl, {
 				url: 'cube.png'
-			})
+			}, () => renderer.render(camera, scene))
 		}
 	});
 
@@ -114,6 +115,8 @@ export function init() {
 		}
 
 		if(axis) camera.rotateBy(sin, cos, axis);
+
+		renderer.render(camera, scene);
 	});
 
 	const drag = new Drag(canvas, camera);
@@ -139,11 +142,9 @@ export function init() {
 		position.setNormalized();
 		const direction = TransMatrix.solveDirection(drag.dragPosition, position, camera.direction);
 		if(direction) camera.direction = direction;
+
+		renderer.render(camera, scene);
 	}
-
-	const renderer = new Renderer(gl);
-
-	setInterval(() => renderer.render(camera, scene), 100);
 }
 
 init();
