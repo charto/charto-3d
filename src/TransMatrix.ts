@@ -316,7 +316,8 @@ export class TransMatrix {
 	 * rotates a given unit vector in world coordinates to match another given
 	 * unit vector in the camera's coordinate space.
 	 *
-	 * Note: zenith cannot be rotated below horizon or nadir above horizon. */
+	 * Note: zenith cannot be rotated below horizon or nadir above horizon.
+	 * Also see http://stackoverflow.com/a/40019623 */
 
 	static solveDirection(original: Vector3, rotated: Vector3, guess: Vector3) {
 		const epsilon = 1/65536;
@@ -351,27 +352,28 @@ export class TransMatrix {
 			const w = 1 - v*v;
 			const y2v2 = y*y * v*v;
 
+			let E =  w*w *                     (x2 - p2);
 			let F = x2*w *   (z2*w +   y2v2 +   x2 - p2);
 			let A =    w *   (z2*w -   y2v2 +   x2);
-			let B = z2*w *   (z2*w - 2*y2v2 + 2*x2) + (x2 + y2v2) * (x2 + y2v2);
-			let C = p2*w * (2*z2*w + 2*y2v2) - 2*F;
-			let D = p2*w * (3*z2*w -   y2v2) -   F;
-			let E = (x2 - p2) * w*w;
+			let B = z2*w *   (z2*w - 2*y2v2 + 2*x2);
+			let C = p2*w *   (z2*w +   y2v2) - F;
+			let D = p2*w * (3*z2*w -   y2v2) - F;
 
-			A /= B;
-			C /= B;
-			D /= B;
-			E /= B;
+			B = 2 / (B + (x2 + y2v2) * (x2 + y2v2));
 
-			A *= original.x * z;
-			E *= original.x * z;
+			E *= B * original.x * z * 4;
+			A *= B * original.x * z;
+			C *= B;
+			D *= B;
 
-			let discriminantX1 = 4 * A*A + C - 2*D;
+			let discriminantX1 = A*A + C - D;
+
 			if(discriminantX1 < 0) {
 				// Rare but possible, what does this mean?
 				console.log('Unknown error 1');
 				continue;
 			}
+
 			discriminantX1 = Math.sqrt(discriminantX1);
 
 			for(let j = 0; j < 16; ++j) {
@@ -380,18 +382,20 @@ export class TransMatrix {
 				const sign5 = ((j >> 1) & 2) - 1;
 				const sign6 = ((j >> 2) & 2) - 1;
 
-				const discriminantX2 = (
-					(8*A*A) - C - 2*D +
-					32 * (A * (2*A*A - D) - E) / (4 * sign3 * discriminantX1)
+				let discriminantX2 = (
+					2*A*A - C - D +
+					(2*A * (A*A - D) - E) / (sign3 * discriminantX1)
 				)
 
 				if(discriminantX2 < 0) continue;
 
+				discriminantX2 = Math.sqrt(discriminantX2);
+
 				/** Output X component */
-				let u = sign5 * (
+				let u = sign5 * (1/2) * (
 					A +
-					sign3 * discriminantX1/2 +
-					sign4 * 1/2 * Math.sqrt(discriminantX2)
+					sign3 * discriminantX1 +
+					sign4 * discriminantX2
 				);
 
 				const d = new Vector3(u, v, sign6 * Math.sqrt(1 - u*u - v*v));
@@ -413,6 +417,7 @@ export class TransMatrix {
 			}
 		}
 
+		/** Sort by proximity to given direction. */
 		resultList.sort((a, b) => b.cosGuess - a.cosGuess);
 
 		return(resultList.length ? resultList[0].vector : null);
